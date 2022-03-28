@@ -1,4 +1,36 @@
 //constants
+const classAttackTable = {
+    "saber" : 1,
+    "caster" : 0.9,
+    "berserker" : 1.1,
+}
+const attributeAdvantageTable = {
+    "sky": {
+      "sky": 1000,
+      "earth": 1100,
+    },
+    "earth": {
+      "sky": 900,
+      "earth": 1000,
+    },
+}
+const classAdvantageTable = {
+    "saber": {
+      "saber": 1000,
+      "caster": 1000,
+      "berserker": 2000,
+    },
+    "caster": {
+      "saber": 1000,
+      "caster": 1000,
+      "berserker": 2000,
+    },
+    "berserker": {
+      "saber": 1500,
+      "caster": 1500,
+      "berserker": 1500,
+    },
+}
 const cardTypeTable = ['Quick', 'Arts', 'Buster'];
 const cdvTable = [
     [0.8,0.9,1.12],  //Quick values
@@ -16,6 +48,8 @@ const Arthur = {
     name:'Arthur',
     maxHP : 15310,
     currentHP : 15310,
+    class : 'saber',
+    attribute : 'earth',
     np : '', // TODO: Implement function for skills! just assign the function name (see .deck) and then we can call character.spell() later.
     charge : 0,
     attack : 13645,
@@ -31,6 +65,8 @@ const Lancelot = {
     name:'Lancelot',
     maxHP : 14051,
     currentHP : 14051,
+    class : 'saber',
+    attribute : 'earth',
     np : '',
     charge : 0,
     attack : 12046,
@@ -45,6 +81,8 @@ const Gawain = {
     name:'Gawain',
     maxHP : 13845,
     currentHP : 13845,
+    class : 'saber',
+    attribute : 'earth',
     np : '',
     charge : 0,
     attack : 12317,
@@ -59,6 +97,8 @@ const Jason = {
     name:'Jason',
     maxHP : 11677,
     currentHP : 11677,
+    class : 'saber',
+    attribute : 'earth',
     np : '',
     charge : 0,
     attack : 8479,
@@ -73,6 +113,8 @@ const Medea = {
     name:'Medea',
     maxHP : 11719,
     currentHP : 11719,
+    class : 'caster',
+    attribute : 'earth',
     np : '',
     charge : 0,
     attack : 10039,
@@ -87,6 +129,8 @@ const Heracles = {
     name:'Heracles',
     maxHP : 12521,
     currentHP : 12521,
+    class : 'berserker',
+    attribute : 'sky',
     np : '',
     charge : 0,
     attack : 12901,
@@ -266,25 +310,27 @@ function attack(source, target, cardPos, cardType, isNP) {
     let cardDamageValue = cdvTable[cardType][cardPos];
     // cardMod = source.cardMods[cardType]; NYI see next line.
     cardMod = 0; //cardMod buffs are NYI, this is to not break the cardDamageValue formula.
+    let classAttackBonus = classAttackTable[source.class];
+    let classAdvantageModifier = classAdvantageTable[source.class][target.class] / 1000;
+    let attributeModifier = attributeAdvantageTable[source.attribute][target.attribute] / 1000;
     let damage;
     // let criticalModifier = 1 + isCrit;
+
     damage = source.attack
-    // NYI
-    // * ((isNP === 1) ? npDamageMultiplier : 1) //% value on NP
-    * (firstCardBuster + (cardDamageValue * (1 + cardMod))) //0.2 if Buster lead, CDV lookup
-    // * classAtkBonus //Base damage change for classes
-    // * triangleModifier //Effective/Resist
-    // * attributeModifier //Star Human Earth Beast Man
-    * (0.9 + Math.random()*0.2) //Random from 0.9 to 1.1
-    * 0.23 //Magic Number TM part of the formula
-    // NYI
-    // * (1 + atkMod - defMod) //Buffs
-    // * criticalModifier //2 if Crit, 1 if not.
-    // * extraCardModifier //2 if extra in Brave, 3.5 if extra in Q/A/B Brave, 1 if neither
-    // * (1 - specialDefMod) //Some enemies have this.
-    // * (1 + powerMod + selfDamageMod + (critDamageMod * isCrit) + (npDamageMod * isNP)) //power mod, sdm is nyi, cdm is crit % up/down, npDamageMod is np % up/down
-    // * (1 + damageSpecialMod) //SpecialAttack, event CE etc.
-    // * (1 + ((superEffectiveModifier - 1) * isSuperEffective)) //NP SuperEffective % and qualification.
+        // * ((isNP === 1) ? npDamageMultiplier : 1) //% value on NP
+        * (firstCardBuster + (cardDamageValue * (1 + cardMod))) //0.2 if Buster lead, CDV lookup
+        * classAttackBonus //Base damage change for classes
+        * classAdvantageModifier //Effective/Resist class triangle
+        * attributeModifier //Star Human Earth Beast Man
+        * (0.9 + Math.random()*0.2) //Random from 0.9 to 1.1
+        * 0.23 //Magic Number TM part of the formula
+        // * (1 + atkMod - defMod) //Buffs
+        // * criticalModifier //2 if Crit, 1 if not.
+        // * extraCardModifier //2 if extra in Brave, 3.5 if extra in Q/A/B Brave, 1 if neither
+        // * (1 - specialDefMod) //Some enemies have this.
+        // * (1 + powerMod + selfDamageMod + (critDamageMod * isCrit) + (npDamageMod * isNP)) //power mod, sdm is nyi, cdm is crit % up/down, npDamageMod is np % up/down
+        // * (1 + damageSpecialMod) //SpecialAttack, event CE etc.
+        // * (1 + ((superEffectiveModifier - 1) * isSuperEffective)) //NP SuperEffective % and qualification.
     // + dmgPlusAdd //Flat increases from Waver, Divinity, etc
     // + selfDmgCutAdd //Flat decreases from Waver, mash, etc
     + (source.attack * busterChainMod) //if Buster Chain 0.2, 0 otherwise.
