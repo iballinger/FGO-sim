@@ -1,4 +1,14 @@
 //constants
+const serverNPModTable = {
+    "saber" : 1,
+    "caster" : 1.2,
+    "berserker" : 0.8,
+}
+const serverStarModTable = {
+    "saber" : 0,
+    "caster" : 0,
+    "berserker" : 0,
+}
 const classAttackTable = {
     "saber" : 1,
     "caster" : 0.9,
@@ -50,15 +60,18 @@ const Arthur = {
     currentHP : 15310,
     class : 'saber',
     attribute : 'earth',
-    np : '', // TODO: Implement function for skills! just assign the function name (see .deck) and then we can call character.spell() later.
+    np : [2,'Arthur',1], //cardType, owner, isNP.
+    npDamage : 500,
+    npTarget : 1, //(0 for single, 1 for AOE, 2 for support)
+    npExtras : 'NPStrUp 10% 1 turn', //Replace with function declaration for NP extras.
     charge : 0,
     attack : 13645,
     starDrop : 10,
     starWeight: 100,
     npGainAtk : 0.84,
     npGainDef : 3,
-    cards: [[2,'Arthur'],[2,'Arthur'],[0,'Arthur'],[1,'Arthur'],[1,'Arthur']],
-        //TODO: more elegant way of handling card ownership. Probably handled in Attack()
+    cards: [[2,'Arthur',0],[2,'Arthur',0],[0,'Arthur',0],[1,'Arthur',0],[1,'Arthur',0]],
+    //TODO: more elegant way of handling card ownership. Probably handled in Attack()
     hitCount: [3,2,1,5,3],
 };
 const Lancelot = {
@@ -67,14 +80,17 @@ const Lancelot = {
     currentHP : 14051,
     class : 'saber',
     attribute : 'earth',
-    np : '',
+    np : [1,'Lancelot',1],
+    npDamage : 1500,
+    npTarget : 0,
+    npExtras : 'Incoming Damage Plus 1000 to target 5 turns', //Replace with function declaration for NP extras.
     charge : 0,
     attack : 12046,
     starDrop : 10,
     starWeight: 100,
     npGainAtk : 0.83,
     npGainDef : 3,
-    cards: [[2,'Lancelot'],[2,'Lancelot'],[0,'Lancelot'],[1,'Lancelot'],[1,'Lancelot']],
+    cards: [[2,'Lancelot',0],[2,'Lancelot',0],[0,'Lancelot',0],[1,'Lancelot',0],[1,'Lancelot',0]],
     hitCount: [3,2,4,5,1],
 };
 const Gawain = {
@@ -83,14 +99,17 @@ const Gawain = {
     currentHP : 13845,
     class : 'saber',
     attribute : 'earth',
-    np : '',
+    np : [2,'Gawain',1],
+    npDamage : 500,
+    npTarget : 1,
+    npExtras : 'Skill Seal all enemy 1 turn, Burn 1000 all enemies 5 turns', //Replace with function declaration for NP extras.
     charge : 0,
     attack : 12317,
     starDrop : 10,
     starWeight: 102,
     npGainAtk : 1.14,
     npGainDef : 3,
-    cards: [[2,'Gawain'],[2,'Gawain'],[2,'Gawain'],[0,'Gawain'],[1,'Gawain']],
+    cards: [[2,'Gawain',0],[2,'Gawain',0],[2,'Gawain',0],[0,'Gawain',0],[1,'Gawain',0]],
     hitCount: [2,2,1,5,4],
 };
 const Jason = {
@@ -99,14 +118,17 @@ const Jason = {
     currentHP : 11677,
     class : 'saber',
     attribute : 'earth',
-    np : '',
+    np : [1,'Jason',1],
+    npDamage : 750,
+    npTarget : 1,
+    npExtras : 'Arts up 20% 3 turns', //Replace with function declaration for NP extras.
     charge : 0,
     attack : 8479,
     starDrop : 10,
     starWeight: 100,
     npGainAtk : 0.84,
     npGainDef : 3,
-    cards: [[2,'Jason'],[2,'Jason'],[0,'Jason'],[1,'Jason'],[1,'Jason']],
+    cards: [[2,'Jason',0],[2,'Jason',0],[0,'Jason',0],[1,'Jason',0],[1,'Jason',0]],
     hitCount: [3,4,1,4,5],
 };
 const Medea = {
@@ -115,14 +137,17 @@ const Medea = {
     currentHP : 11719,
     class : 'caster',
     attribute : 'earth',
-    np : '',
+    np : [1, 'Medea',1],
+    npDamage : 900,
+    npTarget : 0,
+    npExtras : 'Clear buffs target, charge 20% self', //Replace with function declaration for NP extras.
     charge : 0,
     attack : 10039,
     starDrop : 10.9,
     starWeight: 50,
     npGainAtk : 1.64,
     npGainDef : 3,
-    cards: [[0,'Medea'],[1,'Medea'],[1,'Medea'],[1,'Medea'],[2,'Medea']],
+    cards: [[0,'Medea',0],[1,'Medea',0],[1,'Medea',0],[1,'Medea',0],[2,'Medea',0]],
     hitCount: [2,1,1,3,1],
 };
 const Heracles = {
@@ -131,14 +156,17 @@ const Heracles = {
     currentHP : 12521,
     class : 'berserker',
     attribute : 'sky',
-    np : '',
+    np : [2,'Heracles',1],
+    npDamage : 1000,
+    npTarget : 0,
+    npExtras : 'Defense down 10% for 3 turns', //Replace with function declaration for NP extras.
     charge : 0,
     attack : 12901,
     starDrop : 5,
     starWeight: 10,
     npGainAtk : 1.07,
     npGainDef : 5,
-    cards: [[2,'Heracles'],[2,'Heracles'],[2,'Heracles'],[1,'Heracles'],[0,'Heracles']],
+    cards: [[2,'Heracles',0],[2,'Heracles',0],[2,'Heracles',0],[1,'Heracles',0],[0,'Heracles',0]],
     hitCount: [2,2,1,3,15],
 };
 
@@ -167,8 +195,8 @@ const goBtn = document.getElementById('go');
 const topMsg = document.querySelector('h1');
 
 /* Event Listener */
-document.querySelector('#normal-cards').addEventListener('click', handleCardClick);
-// document.querySelector('#np-cards').addEventListener('click', handleCardClick); NP NYI
+document.querySelector('#normal-cards').addEventListener('click', handleNormalCardClick);
+document.querySelector('#np-cards').addEventListener('click', handleNPCardClick); //NP NYI
 document.getElementById('go').addEventListener('click', handleGoClick);
 document.querySelector('#enemy-team').addEventListener('click', handleTargetClick);
 //TODO: event listener onClick to use skills.
@@ -208,6 +236,7 @@ function turnSetup() {
     for(let i=0; i<5; i++){
         draw(hand, deck);
     }
+    npHand = [playerTeammateOne.np, playerTeammateTwo.np, playerTeammateThree.np]
     renderCards();
     chosenCards = [];
 }
@@ -217,14 +246,20 @@ function turnExecute() {
     for (let i=0; i<3; i++) {
         if (gameState === null) {
             attack(playerTeam.find(({ name }) => name === chosenCards[i][1]),
-                enemyTeam[playerTarget], i, chosenCards[i][0]);
+                enemyTeam[playerTarget], i, chosenCards[i][0], chosenCards[i][2]);
         }
     }
     playerTurn = false;
     for(let i=0; i<3; i++) {
         if (gameState === null) {
-            enemyTarget = getRandomInt(0, playerTeam.length); //TODO: make sure it handles skipping player members at <= 0 HP.
+            enemyTarget = getRandomInt(0, playerTeam.length);
+            while (enemyTarget.currentHP < 0) {
+                enemyTarget = getRandomInt(0, playerTeam.length);
+            }
             let activeEnemy = getRandomInt(0, enemyTeam.length);
+            while (activeEnemy.currentHP < 0) {
+                activeEnemy = getRandomInt(0, enemyTeam.length);
+            }
             attack(enemyTeam[activeEnemy],playerTeam[enemyTarget],getRandomInt(0,2),1);
         }
     }
@@ -270,10 +305,18 @@ function renderCharacter(element, char) {
     element.children[3].innerText = char.charge;
 }
 
-function handleCardClick(evt) {
+function handleNormalCardClick(evt) {
     if (chosenCards.length < 3) {
         let parent = evt.target.parentNode;
         chosenCards.push(hand[Array.prototype.indexOf.call(parent.children, evt.target)]); //See the TODO in handleTargetClick; can we simplify?
+        evt.target.disabled = true;
+    }
+}
+
+function handleNPCardClick(evt) {
+    if (chosenCards.length < 3) {
+        let parent = evt.target.parentNode;
+        chosenCards.push(npHand[Array.prototype.indexOf.call(parent.children, evt.target)]); //See the TODO in handleTargetClick; can we simplify?
         evt.target.disabled = true;
     }
 }
@@ -299,51 +342,68 @@ function attack(source, target, cardPos, cardType, isNP) {
     //cardPos is zero indexed.
     console.log(source.name + " is attacking "+target.name+".");
     let cardMod;
-    let hitCount = (isNP = 1) ? source.hitCount[4] : source.hitCount[cardType];
-    if (isNP = 1) {cardPos = 0};
-    
+    let hitCount = (isNP === 1) ? source.hitCount[4] : source.hitCount[cardType];
+    if (isNP === 1) {
+        cardPos = 0;
+        source.charge = 0;
+    };
+    let critChance = 1;
     // DAMAGE SECTION
-    // let isCrit = (Math.random < critChance) ? 1 : 0; //Crit chance NYI.
+    let isCrit = (Math.random < critChance) ? 1 : 0; //Crit chance NYI.
     let firstCardBuster = (chosenCards[0][0] = 2) ? 0.2 : 0;
     let busterChainMod = ((chosenCards[0][0] + chosenCards[1][0] + chosenCards[2][0]) === 6) ? 0.2 : 0;
         //TODO: fix this because Arts-Extra chains break it
     let cardDamageValue = cdvTable[cardType][cardPos];
     // cardMod = source.cardMods[cardType]; NYI see next line.
     cardMod = 0; //cardMod buffs are NYI, this is to not break the cardDamageValue formula.
+
     let classAttackBonus = classAttackTable[source.class];
     let classAdvantageModifier = classAdvantageTable[source.class][target.class] / 1000;
     let attributeModifier = attributeAdvantageTable[source.attribute][target.attribute] / 1000;
-    let damage;
-    // let criticalModifier = 1 + isCrit;
-
-    damage = source.attack
-        // * ((isNP === 1) ? npDamageMultiplier : 1) //% value on NP
+    let criticalModifier = 1 + isCrit;
+    let npDamageMultiplier = (source.npDamage)?source.npDamage/100:1;
+    
+    let damage = source.attack
+        * ((isNP === 1) ? npDamageMultiplier : 1) //% value on NP
         * (firstCardBuster + (cardDamageValue * (1 + cardMod))) //0.2 if Buster lead, CDV lookup
         * classAttackBonus //Base damage change for classes
         * classAdvantageModifier //Effective/Resist class triangle
         * attributeModifier //Star Human Earth Beast Man
-        * (0.9 + Math.random()*0.2) //Random from 0.9 to 1.1
+        * (0.9 + getRandomInt(0,200)/1000) //Random from 0.9 to 1.099; getRandomInt's upper bound is not included.
         * 0.23 //Magic Number TM part of the formula
         // * (1 + atkMod - defMod) //Buffs
-        // * criticalModifier //2 if Crit, 1 if not.
+        * criticalModifier //2 if Crit, 1 if not.
         // * extraCardModifier //2 if extra in Brave, 3.5 if extra in Q/A/B Brave, 1 if neither
         // * (1 - specialDefMod) //Some enemies have this.
         // * (1 + powerMod + selfDamageMod + (critDamageMod * isCrit) + (npDamageMod * isNP)) //power mod, sdm is nyi, cdm is crit % up/down, npDamageMod is np % up/down
         // * (1 + damageSpecialMod) //SpecialAttack, event CE etc.
         // * (1 + ((superEffectiveModifier - 1) * isSuperEffective)) //NP SuperEffective % and qualification.
-    // + dmgPlusAdd //Flat increases from Waver, Divinity, etc
-    // + selfDmgCutAdd //Flat decreases from Waver, mash, etc
-    + (source.attack * busterChainMod) //if Buster Chain 0.2, 0 otherwise.
-    damage = Math.floor(Math.max(damage,0));
-    target.currentHP -= damage;
-    console.log(`${target.name} took ${damage} damage, and is at ${target.currentHP} hp now.`)
-    if (target.currentHP <= 0 && playerTurn === true) {
-        defeat(target);
+        // + dmgPlusAdd //Flat increases from Waver, Divinity, etc
+        // + selfDmgCutAdd //Flat decreases from Waver, mash, etc
+        + (source.attack * busterChainMod); //if Buster Chain 0.2, 0 otherwise.
+    damage = Math.floor(Math.max(damage,0)); 
+    if ((isNP === 1) && (source.npTarget === 1)) {
+        for (let i = 0; i < enemyTeam.length; i++) {
+            if (enemyTeam[i].currentHP > 0) {
+                enemyTeam[i].currentHP -= damage;
+                console.log(`${enemyTeam[i].name} took ${damage} damage ${isCrit}, and is at ${enemyTeam[i].currentHP} hp now.`)
+                if (enemyTeam[i].currentHP <= 0) {
+                    defeat(enemyTeam[i]);
+                }
+            }
+        }
+    } else {
+        target.currentHP -= damage;
+        console.log(`${target.name} took ${damage} damage ${isCrit}, and is at ${target.currentHP} hp now.`)
+        if (target.currentHP <= 0 && playerTurn === true) {
+            defeat(target);
+        }
     }
     if (target.currentHP <= 0 && playerTurn === false) {
         death(target);
     }
     
+    let serverNPMod = serverNPModTable[target.class];
     if (playerTeam.includes(source)) {
         //NP GAIN SECTION
         let firstCardArts = (chosenCards[0][0] = 1) ? 1 : 0;
@@ -354,9 +414,9 @@ function attack(source, target, cardPos, cardType, isNP) {
             Math.floor(
                 source.npGainAtk
                 * (firstCardArts + (cardNpValue * (1 + cardMod)))
-                // * enemyServerMod NYI, target selection
+                * serverNPMod
                 // * (1 + source.npChargeRateMod) NYI NpGain buff
-                // * (1 + isCrit)NYI Crits
+                * criticalModifier
             )
             // * overkillModifier NYI Overkill
         )
@@ -364,15 +424,17 @@ function attack(source, target, cardPos, cardType, isNP) {
         //CRIT STAR SECTION
         let firstCardQuick = (chosenCards[0][0] = 0) ? 0.2 : 0;
         let cardStarValue = cStarTable[cardType][cardPos];
+        let serverStarMod = serverStarModTable[target.class];
+        let overkillStarAdd = (target.currentHP <= 0) ? 0.3 : 0;
         let dropChancePerHit =
             ((source.starDrop / 100)
             + firstCardQuick + (cardStarValue * (1 + cardMod))
-            // + serverRate
+            + serverStarMod
             // + starDropMod
             // - enemyStarDropMod
-            // + ((isCrit === 1) ? 0.2 : 0) //Crits NYI.
+            + ((isCrit === 1) ? 0.2 : 0)
             )
-            // + overkillAdd //This is 0.3 if it's overkill, 0 if not.
+            + overkillStarAdd;
         dropChancePerHit = Math.min(3, dropChancePerHit);
         for (let i = 0; i < hitCount; i++) {
             dropChance = dropChancePerHit;
@@ -386,11 +448,11 @@ function attack(source, target, cardPos, cardType, isNP) {
         let NpPerStruck = Math.floor(
             Math.floor(
                 target.npGainDef
-                // * enemyServerMod NYI, target selection
+                * serverNPMod
                 // * (1 + target.npChargeRateMod) NYI NpGain buff
                 // * (1 + target.npDefChargeRateMod) NYI NpGainDef buff
             )
-        )
+        );
         target.charge += (NpPerStruck * source.hitCount[cardType]);
     }
     
