@@ -356,49 +356,109 @@ function attack(source, target, cardPos, cardType, isNP) {
     let cardDamageValue = cdvTable[cardType][cardPos];
     // cardMod = source.cardMods[cardType]; NYI see next line.
     cardMod = 0; //cardMod buffs are NYI, this is to not break the cardDamageValue formula.
-
-    let classAttackBonus = classAttackTable[source.class];
-    let classAdvantageModifier = classAdvantageTable[source.class][target.class] / 1000;
-    let attributeModifier = attributeAdvantageTable[source.attribute][target.attribute] / 1000;
-    let criticalModifier = 1 + isCrit;
     let npDamageMultiplier = (source.npDamage)?source.npDamage/100:1;
-    
-    let damage = source.attack
-        * ((isNP === 1) ? npDamageMultiplier : 1) //% value on NP
-        * (firstCardBuster + (cardDamageValue * (1 + cardMod))) //0.2 if Buster lead, CDV lookup
-        * classAttackBonus //Base damage change for classes
-        * classAdvantageModifier //Effective/Resist class triangle
-        * attributeModifier //Star Human Earth Beast Man
-        * (0.9 + getRandomInt(0,200)/1000) //Random from 0.9 to 1.099; getRandomInt's upper bound is not included.
-        * 0.23 //Magic Number TM part of the formula
-        // * (1 + atkMod - defMod) //Buffs
-        * criticalModifier //2 if Crit, 1 if not.
-        // * extraCardModifier //2 if extra in Brave, 3.5 if extra in Q/A/B Brave, 1 if neither
-        // * (1 - specialDefMod) //Some enemies have this.
-        // * (1 + powerMod + selfDamageMod + (critDamageMod * isCrit) + (npDamageMod * isNP)) //power mod, sdm is nyi, cdm is crit % up/down, npDamageMod is np % up/down
-        // * (1 + damageSpecialMod) //SpecialAttack, event CE etc.
-        // * (1 + ((superEffectiveModifier - 1) * isSuperEffective)) //NP SuperEffective % and qualification.
-        // + dmgPlusAdd //Flat increases from Waver, Divinity, etc
-        // + selfDmgCutAdd //Flat decreases from Waver, mash, etc
-        + (source.attack * busterChainMod); //if Buster Chain 0.2, 0 otherwise.
-    damage = Math.floor(Math.max(damage,0)); 
+    let classAttackBonus = classAttackTable[source.class];
+    let criticalModifier = 1 + isCrit;
+
     if ((isNP === 1) && (source.npTarget === 1)) {
         for (let i = 0; i < enemyTeam.length; i++) {
             if (enemyTeam[i].currentHP > 0) {
+                let classAdvantageModifier = classAdvantageTable[source.class][target.class] / 1000;
+                let attributeModifier = attributeAdvantageTable[source.attribute][target.attribute] / 1000;
+                let damage = source.attack
+                    * ((isNP === 1) ? npDamageMultiplier : 1) //% value on NP
+                    * (firstCardBuster + (cardDamageValue * (1 + cardMod))) //0.2 if Buster lead, CDV lookup
+                    * classAttackBonus //Base damage change for classes
+                    * classAdvantageModifier //Effective/Resist class triangle
+                    * attributeModifier //Star Human Earth Beast Man
+                    * (0.9 + getRandomInt(0,200)/1000) //Random from 0.9 to 1.099; getRandomInt's upper bound is not included.
+                    * 0.23 //Magic Number TM part of the formula
+                    // * (1 + atkMod - defMod) //Buffs
+                    * criticalModifier //2 if Crit, 1 if not.
+                    // * extraCardModifier //2 if extra in Brave, 3.5 if extra in Q/A/B Brave, 1 if neither
+                    // * (1 - specialDefMod) //Some enemies have this.
+                    // * (1 + powerMod + selfDamageMod + (critDamageMod * isCrit) + (npDamageMod * isNP)) //power mod, sdm is nyi, cdm is crit % up/down, npDamageMod is np % up/down
+                    // * (1 + damageSpecialMod) //SpecialAttack, event CE etc.
+                    // * (1 + ((superEffectiveModifier - 1) * isSuperEffective)) //NP SuperEffective % and qualification.
+                    // + dmgPlusAdd //Flat increases from Waver, Divinity, etc
+                    // + selfDmgCutAdd //Flat decreases from Waver, mash, etc
+                    + (source.attack * busterChainMod); //if Buster Chain 0.2, 0 otherwise.
+                damage = Math.floor(Math.max(damage,0)); 
                 enemyTeam[i].currentHP -= damage;
                 console.log(`${enemyTeam[i].name} took ${damage} damage ${isCrit}, and is at ${enemyTeam[i].currentHP} hp now.`)
                 if (enemyTeam[i].currentHP <= 0) {
                     defeat(enemyTeam[i]);
                 }
+            let serverNPMod = serverNPModTable[enemyTeam[i].class];
+            let firstCardArts = (chosenCards[0][0] = 1) ? 1 : 0;
+            let cardNpValue;
+            let overkillNPAdd = (enemyTeam[i].currentHP <= 0) ? 1.5 : 0;
+            if (cardType === 2) {cardNpValue = 0}
+                else cardNpValue = (cardType === 1) ? 3 : 1;
+            let NpPerHit = Math.floor(
+                Math.floor(
+                    source.npGainAtk
+                    * (firstCardArts + (cardNpValue * (1 + cardMod)))
+                    * serverNPMod
+                    // * (1 + source.npChargeRateMod) NYI NpGain buff
+                    * criticalModifier
+                )
+                * overkillNPAdd
+            )
+            source.charge += (NpPerHit * hitCount);
+            //CRIT STAR SECTION
+            let firstCardQuick = (chosenCards[0][0] = 0) ? 0.2 : 0;
+            let cardStarValue = cStarTable[cardType][cardPos];
+            let serverStarMod = serverStarModTable[enemyTeam[i].class];
+            let overkillStarAdd = (enemyTeam[i].currentHP <= 0) ? 0.3 : 0;
+            let dropChancePerHit =
+                ((source.starDrop / 100)
+                + firstCardQuick + (cardStarValue * (1 + cardMod))
+                + serverStarMod
+                // + starDropMod
+                // - enemyStarDropMod
+                + ((isCrit === 1) ? 0.2 : 0)
+                )
+                + overkillStarAdd;
+            dropChancePerHit = Math.min(3, dropChancePerHit);
+            for (let i = 0; i < hitCount; i++) {
+                dropChance = dropChancePerHit;
+                while (dropChance > 0) {
+                    if (Math.random() < dropChance) {critStars++}
+                    dropChance--;
+                }
+            }
+            console.log(`Currently at ${critStars} stars.`)
             }
         }
     } else {
+        let classAdvantageModifier = classAdvantageTable[source.class][target.class] / 1000;
+        let attributeModifier = attributeAdvantageTable[source.attribute][target.attribute] / 1000;
+        let criticalModifier = 1 + isCrit;
+        let damage = source.attack
+            * ((isNP === 1) ? npDamageMultiplier : 1) //% value on NP
+            * (firstCardBuster + (cardDamageValue * (1 + cardMod))) //0.2 if Buster lead, CDV lookup
+            * classAttackBonus //Base damage change for classes
+            * classAdvantageModifier //Effective/Resist class triangle
+            * attributeModifier //Star Human Earth Beast Man
+            * (0.9 + getRandomInt(0,200)/1000) //Random from 0.9 to 1.099; getRandomInt's upper bound is not included.
+            * 0.23 //Magic Number TM part of the formula
+            // * (1 + atkMod - defMod) //Buffs
+            * criticalModifier //2 if Crit, 1 if not.
+            // * extraCardModifier //2 if extra in Brave, 3.5 if extra in Q/A/B Brave, 1 if neither
+            // * (1 - specialDefMod) //Some enemies have this.
+            // * (1 + powerMod + selfDamageMod + (critDamageMod * isCrit) + (npDamageMod * isNP)) //power mod, sdm is nyi, cdm is crit % up/down, npDamageMod is np % up/down
+            // * (1 + damageSpecialMod) //SpecialAttack, event CE etc.
+            // * (1 + ((superEffectiveModifier - 1) * isSuperEffective)) //NP SuperEffective % and qualification.
+            // + dmgPlusAdd //Flat increases from Waver, Divinity, etc
+            // + selfDmgCutAdd //Flat decreases from Waver, mash, etc
+            + (source.attack * busterChainMod); //if Buster Chain 0.2, 0 otherwise.
+        damage = Math.floor(Math.max(damage,0)); 
         target.currentHP -= damage;
         console.log(`${target.name} took ${damage} damage ${isCrit}, and is at ${target.currentHP} hp now.`)
         if (target.currentHP <= 0 && playerTurn === true) {
             defeat(target);
         }
-    }
     if (target.currentHP <= 0 && playerTurn === false) {
         death(target);
     }
@@ -408,6 +468,7 @@ function attack(source, target, cardPos, cardType, isNP) {
         //NP GAIN SECTION
         let firstCardArts = (chosenCards[0][0] = 1) ? 1 : 0;
         let cardNpValue;
+        let overkillNPAdd = (target.currentHP <= 0) ? 1.5 : 0;
         if (cardType === 2) {cardNpValue = 0}
             else cardNpValue = (cardType === 1) ? 3 : 1;
         let NpPerHit = Math.floor(
@@ -418,7 +479,7 @@ function attack(source, target, cardPos, cardType, isNP) {
                 // * (1 + source.npChargeRateMod) NYI NpGain buff
                 * criticalModifier
             )
-            // * overkillModifier NYI Overkill
+            * overkillNPAdd
         )
         source.charge += (NpPerHit * hitCount);
         //CRIT STAR SECTION
@@ -455,7 +516,8 @@ function attack(source, target, cardPos, cardType, isNP) {
         );
         target.charge += (NpPerStruck * source.hitCount[cardType]);
     }
-    
+}
+
     renderBattlefield();
 }
         
