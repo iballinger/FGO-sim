@@ -74,6 +74,9 @@ const Arthur = {
     cards: [[2,'Arthur',0],[2,'Arthur',0],[0,'Arthur',0],[1,'Arthur',0],[1,'Arthur',0]],
     //TODO: more elegant way of handling card ownership. Probably handled in Attack()
     hitCount: [3,2,1,5,3],
+    skills: [[manaBurstA, "Mana Burst A"],
+        [resplendentJourneyEX, "Resplendent Journey EX"],
+        [giantBeastHuntA, "Giant Beast Hunt A"],],
 };
 const Lancelot = {
     name:'Lancelot',
@@ -94,6 +97,7 @@ const Lancelot = {
     npGainDef : 3,
     cards: [[2,'Lancelot',0],[2,'Lancelot',0],[0,'Lancelot',0],[1,'Lancelot',0],[1,'Lancelot',0]],
     hitCount: [3,2,4,5,1],
+    skills: [[knightOfTheLakeA, "Knight of the Lake A"], [eternalArmsMasteryAPlus, "Eternal Arms Mastery A+"], [knightOfOwnerASharp, "Knight of Owner A+"]],
 };
 const Gawain = {
     name:'Gawain',
@@ -114,6 +118,7 @@ const Gawain = {
     npGainDef : 3,
     cards: [[2,'Gawain',0],[2,'Gawain',0],[2,'Gawain',0],[0,'Gawain',0],[1,'Gawain',0]],
     hitCount: [2,2,1,5,4],
+    skills: [[numeralOfTheSaintEX, "Numeral of the Saint EX"], [nightlessCharismaB, "Nightless Charisma B"], [beltOfBertilakEX, "Belt of Bertilak EX"]],
 };
 const Jason = {
     name:'Jason',
@@ -134,6 +139,7 @@ const Jason = {
     npGainDef : 3,
     cards: [[2,'Jason',0],[2,'Jason',0],[0,'Jason',0],[1,'Jason',0],[1,'Jason',0]],
     hitCount: [3,4,1,4,5],
+    skills: [[theDesiredArgonCoin, "The Desired Argon Coin"], [inspirationAtDeathsDoorA, "Inspiration at Death's Door A"], [counqueringTheSeaWithFriendsBSharp, "Conqueringthe Sea with Friends B++"]],
 };
 const Medea = {
     name:'Medea',
@@ -154,6 +160,7 @@ const Medea = {
     npGainDef : 3,
     cards: [[0,'Medea',0],[1,'Medea',0],[1,'Medea',0],[1,'Medea',0],[2,'Medea',0]],
     hitCount: [2,1,1,3,1],
+    skills: [[rapidWordsOfDivineA, "Rapid Words of Divine A"], [argonCoin, "Argon Coin"], [circesTeachingA, "Circe's Teaching A"]],
 };
 const Heracles = {
     name:'Heracles',
@@ -174,6 +181,7 @@ const Heracles = {
     npGainDef : 5,
     cards: [[2,'Heracles',0],[2,'Heracles',0],[2,'Heracles',0],[1,'Heracles',0],[0,'Heracles',0]],
     hitCount: [2,2,1,3,15],
+    skills: [[valorAPlus, "Valor A+"], [mindsEyeFakeB, "Mind's Eye (Fake) B"], [battleContinuationA, "Battle Continuation A"]],
 };
 
 /* Variables */
@@ -198,6 +206,7 @@ const cardBtns = document.querySelector('#cards');
 const npBtns = [...document.querySelectorAll('#np-cards > button')];
 const normalCardBtns = [...document.querySelectorAll('#normal-cards > button')];
 const goBtn = document.getElementById('go');
+const resetBtn = document.getElementById('reset');
 const topMsg = document.querySelector('h1');
 
 /* Event Listener */
@@ -205,11 +214,13 @@ document.querySelector('#normal-cards').addEventListener('click', handleNormalCa
 document.querySelector('#np-cards').addEventListener('click', handleNPCardClick); //NP NYI
 document.getElementById('go').addEventListener('click', handleGoClick);
 document.querySelector('#enemy-team').addEventListener('click', handleTargetClick);
-//TODO: event listener onClick to use skills.
+document.getElementById('reset').addEventListener('click', init);
+document.getElementById('skills').addEventListener('click', handleSkillClick);
 
 /* Setup */
 function init() {
     gameState = null;
+    resetBtn.style.visibility = 'hidden';
     playerTurn = true;
     
     // This code lets us copy objects in order to have duplicates on the team, even though we're not using them right now; future-proofing away!
@@ -227,7 +238,6 @@ function init() {
 
     playerTarget = 0;
     enemyTarget = getRandomInt(0, playerTeam.length); //Enemies target randomly.
-        //TODO: enemy AI?
     deck = [];
     hand = [];
     for (let i=0; i<3; i++) {
@@ -237,6 +247,7 @@ function init() {
     }    
     makeDeck();
     renderBattlefield();
+    renderSkillBtns();
     renderTopMsg();
     turnSetup();
 }
@@ -282,6 +293,7 @@ function turnExecute() {
         if (playerTeam[i].charge === 99) {playerTeam[i].charge = 100};
         npBtns[i].disabled = (playerTeam[i].charge >= 100) ? false : true;
     }
+    renderSkillBtns();
     turnSetup();
 }
 
@@ -315,6 +327,16 @@ function renderBattlefield() {
     }
 }
 
+function renderSkillBtns() {
+    let btnIdx = 0;
+    for (let i=0; i<playerTeam.length; i++) {
+        for (let j=0; j<playerTeam[i].skills.length; j++) {
+            skillBtns[btnIdx].innerText = playerTeam[i].skills[j][1];
+            btnIdx++;
+        }
+    }
+}
+
 function renderCharacter(element, char) {
     if (char.currentHP > 0) {
         element.children[0].src = `images/${char.name}.webp`;
@@ -343,6 +365,14 @@ function handleNPCardClick(evt) {
 
 function handleGoClick() {
     if (chosenCards.length === 3) turnExecute();
+}
+
+function handleSkillClick(evt) {
+    let parent = evt.target.parentNode;
+    let index = Array.prototype.indexOf.call(parent.children, evt.target);
+    let char = Math.floor(index/3);
+    let sIndex = (index % 3);
+    playerTeam[char].skills[sIndex][0]();
 }
 
 function handleTargetClick(evt) {
@@ -565,7 +595,10 @@ function death(target) {
     if (i >= playerTeam.length) {
         gameOver();
     } else {
-        enemyTarget = getRandomInt(0, playerTeam.length); //TODO: Handle enemy targeting at <= 0 HP.
+        enemyTarget = getRandomInt(0, playerTeam.length); //TODO: Why doesn't this work? Enemies repeat attacks against dead allies.
+        while (enemyTarget.currentHP <= 0) {
+            enemyTarget = getRandomInt(0, playerTeam.length);
+        }
         makeDeck();
     }
 }
@@ -575,17 +608,15 @@ function defeat(target) {
     let targetIndex = enemyTeam.indexOf(target);
     enemyElArray[targetIndex].style.borderStyle = 'none';
     enemyElArray[targetIndex].children[0].src = `images/Gravestone.webp`;
-    let i = 0;
-    while (true) { //TODO: This is really ugly, can it be simplified? Basically a FOR loop with two separate exit conditions.
-        if (i >= enemyTeam.length) {
-            victory();
-            break;
-        } else if (enemyTeam[i].currentHP > 0) {
+    let i;
+    for (i = 0; i < enemyTeam.length; i++) {
+        if (enemyTeam[i].currentHP > 0) {
             playerTarget = i;
-            break;
-        } else {
-            i++;
+            break
         }
+    }
+    if (i >= enemyTeam.length) {
+        victory();
     }
 }
 
@@ -609,12 +640,87 @@ function draw(handTo, deckFrom) {
 
 function gameOver() {
     gameState = -1;
+    resetBtn.style.visibility = 'visible';
     renderTopMsg();
 }
 
 function victory() {
     gameState = 1;
+    resetBtn.style.visibility = 'visible';
     renderTopMsg();
+}
+
+//SKILLS
+function manaBurstA() {
+    console.log("Mana burst!");
+}
+
+function resplendentJourneyEX() {
+    console.log("Resplendent journey!");
+}
+
+function giantBeastHuntA() {
+    console.log("Giant beast hunt!");
+}
+
+function knightOfTheLakeA() {
+    console.log("Knight of the Lake!");
+}
+
+function eternalArmsMasteryAPlus() {
+    console.log("Eternal Arms Mastery!");
+}
+
+function knightOfOwnerASharp() {
+    console.log("Knight of Owner!");
+}
+
+function numeralOfTheSaintEX() {
+    console.log("Numeral of the Saint!");
+}
+
+function nightlessCharismaB() {
+    console.log("Nightless Charisma!");
+}
+
+function beltOfBertilakEX() {
+    console.log("Belt of Bertilak!");
+}
+
+function theDesiredArgonCoin() {
+    console.log("The Desired Argon Coin!");
+}
+
+function inspirationAtDeathsDoorA() {
+    console.log("Inspiration at Death's Door!");
+}
+
+function counqueringTheSeaWithFriendsBSharp() {
+    console.log("Conquering the Sea with Friends!");
+}
+
+function rapidWordsOfDivineA() {
+    console.log("Rapid Words of Divine!");
+}
+
+function argonCoin() {
+    console.log("Argon Coin!");
+}
+
+function circesTeachingA() {
+    console.log("Circe's Teachings!");
+}
+
+function valorAPlus() {
+    console.log("Valor A Plus!");
+}
+
+function mindsEyeFakeB() {
+    console.log("Mind's Eye (Fake)!");
+}
+
+function battleContinuationA() {
+    console.log("Battle Continuation!");
 }
 
 init();
