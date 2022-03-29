@@ -208,6 +208,7 @@ const normalCardBtns = [...document.querySelectorAll('#normal-cards > button')];
 const goBtn = document.getElementById('go');
 const resetBtn = document.getElementById('reset');
 const topMsg = document.querySelector('h1');
+const battleLog = document.getElementById('battle-log');
 
 /* Event Listener */
 document.querySelector('#normal-cards').addEventListener('click', handleNormalCardClick);
@@ -220,6 +221,7 @@ document.getElementById('skills').addEventListener('click', handleSkillClick);
 /* Setup */
 function init() {
     gameState = null;
+    battleLog.innerHTML = '';
     resetBtn.style.visibility = 'hidden';
     playerTurn = true;
     
@@ -294,6 +296,7 @@ function turnExecute() {
         npBtns[i].disabled = (playerTeam[i].charge >= 100) ? false : true;
     }
     renderSkillBtns();
+    logLineBreak();
     turnSetup();
 }
 
@@ -347,6 +350,18 @@ function renderCharacter(element, char) {
     element.children[3].innerText = char.charge;
 }
 
+function combatLog(string) {
+    const newP = document.createElement('p');
+    const newContent = document.createTextNode(string);
+    newP.appendChild(newContent);
+    battleLog.appendChild(newP);
+}
+
+function logLineBreak() {
+    const newHR = document.createElement('hr');
+    battleLog.appendChild(newHR);
+}
+
 function handleNormalCardClick(evt) {
     if (chosenCards.length < 3) {
         let parent = evt.target.parentNode;
@@ -390,7 +405,7 @@ function handleTargetClick(evt) {
 function attack(source, target, cardPos, cardType, isNP) {
     //Remember cardType is an int; 0 = Quick, 1 = Arts, 2 = Buster, 3 = extra
     //cardPos is zero indexed.
-    console.log(source.name + " is attacking "+target.name+".");
+    combatLog(`${source.name} is attacking ${target.name}.`);
     let cardMod;
     let hitCount = (isNP === 1) ? source.hitCount[4] : source.hitCount[cardType];
     let critChance = 0.1;
@@ -440,7 +455,7 @@ function attack(source, target, cardPos, cardType, isNP) {
                     + (source.attack * busterChainMod); //if Buster Chain 0.2, 0 otherwise.
                 damage = Math.floor(Math.max(damage,0)); 
                 enemyTeam[i].currentHP -= damage;
-                console.log(`${enemyTeam[i].name} took ${damage} damage ${isCrit}, and is at ${enemyTeam[i].currentHP} hp now.`)
+                combatLog(`${enemyTeam[i].name} took ${damage} damage ${isCrit}, and is at ${enemyTeam[i].currentHP} hp now.`)
                 if (enemyTeam[i].currentHP <= 0) {
                     defeat(enemyTeam[i]);
                 }
@@ -483,7 +498,7 @@ function attack(source, target, cardPos, cardType, isNP) {
                     dropChance--;
                 }
             }
-            console.log(`Currently at ${critStars} stars.`)
+            combatLog(`Currently at ${critStars} stars.`)
             }
         }
     } else {
@@ -510,7 +525,7 @@ function attack(source, target, cardPos, cardType, isNP) {
             + (source.attack * busterChainMod); //if Buster Chain 0.2, 0 otherwise.
         damage = Math.floor(Math.max(damage,0)); 
         target.currentHP -= damage;
-        console.log(`${target.name} took ${damage} damage ${isCrit}, and is at ${target.currentHP} hp now.`)
+        combatLog(`${target.name} took ${damage} damage ${isCrit}, and is at ${target.currentHP} hp now.`)
         if (target.currentHP <= 0 && playerTurn === true) {
             defeat(target);
         }
@@ -559,7 +574,7 @@ function attack(source, target, cardPos, cardType, isNP) {
                     dropChance--;
                 }
             }
-            console.log(`Currently at ${critStars} stars.`)
+            combatLog(`Currently at ${critStars} stars.`)
         } else {
         let NpPerStruck = Math.floor(
             Math.floor(
@@ -583,7 +598,7 @@ function getRandomInt(min, max) {
 }
 
 function death(target) {
-    console.log(`${target.name} died.`);
+    combatLog(`${target.name} died.`);
     let targetIndex = playerTeam.indexOf(target);
     playerElArray[targetIndex].children[0].src = `images/Gravestone.webp`;
     let i;
@@ -604,7 +619,7 @@ function death(target) {
 }
 
 function defeat(target) {
-    console.log(`${target.name} was defeated!`);
+    combatLog(`${target.name} was defeated!`);
     let targetIndex = enemyTeam.indexOf(target);
     enemyElArray[targetIndex].style.borderStyle = 'none';
     enemyElArray[targetIndex].children[0].src = `images/Gravestone.webp`;
@@ -652,75 +667,75 @@ function victory() {
 
 //SKILLS
 function manaBurstA() {
-    console.log("Mana burst!");
+    combatLog("Mana burst!");
 }
 
 function resplendentJourneyEX() {
-    console.log("Resplendent journey!");
+    combatLog("Resplendent journey!");
 }
 
 function giantBeastHuntA() {
-    console.log("Giant beast hunt!");
+    combatLog("Giant beast hunt!");
 }
 
 function knightOfTheLakeA() {
-    console.log("Knight of the Lake!");
+    combatLog("Knight of the Lake!");
 }
 
 function eternalArmsMasteryAPlus() {
-    console.log("Eternal Arms Mastery!");
+    combatLog("Eternal Arms Mastery!");
 }
 
 function knightOfOwnerASharp() {
-    console.log("Knight of Owner!");
+    combatLog("Knight of Owner!");
 }
 
 function numeralOfTheSaintEX() {
-    console.log("Numeral of the Saint!");
+    combatLog("Numeral of the Saint!");
 }
 
 function nightlessCharismaB() {
-    console.log("Nightless Charisma!");
+    combatLog("Nightless Charisma!");
 }
 
 function beltOfBertilakEX() {
-    console.log("Belt of Bertilak!");
+    combatLog("Belt of Bertilak!");
 }
 
 function theDesiredArgonCoin() {
-    console.log("The Desired Argon Coin!");
+    combatLog("The Desired Argon Coin!");
 }
 
 function inspirationAtDeathsDoorA() {
-    console.log("Inspiration at Death's Door!");
+    combatLog("Inspiration at Death's Door!");
 }
 
 function counqueringTheSeaWithFriendsBSharp() {
-    console.log("Conquering the Sea with Friends!");
+    combatLog("Conquering the Sea with Friends!");
 }
 
 function rapidWordsOfDivineA() {
-    console.log("Rapid Words of Divine!");
+    combatLog("Rapid Words of Divine!");
 }
 
 function argonCoin() {
-    console.log("Argon Coin!");
+    combatLog("Argon Coin!");
 }
 
 function circesTeachingA() {
-    console.log("Circe's Teachings!");
+    combatLog("Circe's Teachings!");
 }
 
 function valorAPlus() {
-    console.log("Valor A Plus!");
+    combatLog("Valor A Plus!");
 }
 
 function mindsEyeFakeB() {
-    console.log("Mind's Eye (Fake)!");
+    combatLog("Mind's Eye (Fake)!");
 }
 
 function battleContinuationA() {
-    console.log("Battle Continuation!");
+    combatLog("Battle Continuation!");
 }
 
 init();

@@ -20,9 +20,7 @@ header {
 main {
     height: 88%;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+    
 }
 
 img {
@@ -32,14 +30,30 @@ img {
 section {
     display: flex;
     flex-direction: row;
-    max-width: 80%;
+    max-width: 95%;
     margin:1vmin;
+}
+
+main > section:first-child {
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    flex: 5;
+}
+
+main > div {
+    flex: 1;
+    overflow-y: auto;
+    font-size: small;
+    text-align: left;
+}
+
+section > section {
+    width: 100%
 }
 
 #battlefield {
     height: 60%;
-    width: 80%;
-    
 }
 
 #enemy-team, #ally-team {
@@ -79,13 +93,8 @@ section {
     background-color: rgb(130, 130, 255);
 }
 
-#skills {
-    width: 50%;
-}
-
 #cards {
     flex-direction: column;
-    width:50%;
     flex: 4;
     height: 100%;
 }
